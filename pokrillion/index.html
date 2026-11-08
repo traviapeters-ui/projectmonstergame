@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pokrillion</title>
+<style>
+  :root {
+    --bg: #12131a; --panel: #1c1e29; --panel2: #242737; --text: #f2f3f7; --muted: #9aa0b4;
+    --accent: #e3350d; --line: #333750;
+    --poke: #e3350d; --great: #3b6fe0; --ultra: #f2c12e; --master: #8e44d6; --miss: #59607a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: radial-gradient(circle at 50% -20%, #2a1a2e, var(--bg) 60%);
+    color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { font-size: clamp(2.2rem, 7vw, 3.4rem); margin: 0; letter-spacing: 1px; font-weight: 900;
+       background: linear-gradient(180deg, #ffcb05 30%, #f08a00); -webkit-background-clip: text; background-clip: text; color: transparent;
+       -webkit-text-stroke: 1px #2a75bb; }
+  .tag { color: var(--muted); margin-top: 6px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .hud { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: .95rem; }
+  .hud b { color: var(--text); font-size: 1.15rem; }
+  .question { font-size: clamp(1.2rem, 4vw, 1.5rem); font-weight: 700; margin: 6px 0 4px; }
+  .sub { color: var(--muted); font-size: .9rem; }
+  form { display: flex; gap: 8px; margin-top: 16px; }
+  input[type=text] { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel2); color: var(--text); font-size: 1rem; outline: none; }
+  input[type=text]:focus { border-color: #ffcb05; }
+  button { padding: 12px 16px; border-radius: 10px; border: 0; font-weight: 700; font-size: 1rem; cursor: pointer;
+    background: var(--accent); color: #fff; }
+  button.secondary { background: var(--panel2); color: var(--text); border: 1px solid var(--line); }
+  button:disabled { opacity: .5; cursor: default; }
+  .msg { min-height: 1.4em; margin-top: 10px; color: #ffcb05; font-size: .95rem; }
+  .guesses { display: grid; gap: 10px; margin-top: 14px; }
+  .guess { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--panel2);
+    border-left: 5px solid var(--c, var(--miss)); animation: pop .35s ease; }
+  .guess .name { font-weight: 700; }
+  .guess .meta { color: var(--muted); font-size: .85rem; }
+  .guess .pts { margin-left: auto; font-weight: 800; font-size: 1.1rem; color: var(--c); white-space: nowrap; }
+  @keyframes pop { from { transform: scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* Ball icons, drawn in CSS */
+  .ball { --top: var(--poke); width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; position: relative;
+    background: linear-gradient(180deg, var(--top) 0 46%, #111 46% 54%, #f4f4f4 54%); border: 2px solid #111; }
+  .ball::after { content: ""; position: absolute; width: 30%; height: 30%; left: 35%; top: 35%; border-radius: 50%;
+    background: #f4f4f4; border: 2px solid #111; box-sizing: border-box; }
+  .ball.great { background: linear-gradient(180deg, transparent 0 46%, #111 46% 54%, #f4f4f4 54%),
+    linear-gradient(90deg, var(--great) 0 22%, var(--poke) 22% 32%, var(--great) 32% 68%, var(--poke) 68% 78%, var(--great) 78%); }
+  .ball.ultra { background: linear-gradient(180deg, transparent 0 46%, #111 46% 54%, #f4f4f4 54%),
+    linear-gradient(90deg, #222 0 30%, var(--ultra) 30% 70%, #222 70%); }
+  .ball.master { background: linear-gradient(180deg, transparent 0 46%, #111 46% 54%, #f4f4f4 54%),
+    radial-gradient(circle at 28% 22%, #e8559a 0 9%, transparent 10%), radial-gradient(circle at 72% 22%, #e8559a 0 9%, transparent 10%),
+    linear-gradient(var(--master), var(--master)); }
+  .ball.miss { background: linear-gradient(180deg, #555 0 46%, #111 46% 54%, #888 54%); opacity: .55; }
+  .ball.sm { width: 20px; height: 20px; border-width: 1.5px; }
+  .ball.sm::after { border-width: 1.5px; }
+
+  .tiers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .tier { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 10px 6px;
+    background: var(--panel2); border-radius: 12px; font-size: .8rem; color: var(--muted); }
+  .tier b { color: var(--text); font-size: .9rem; }
+  @media (max-width: 480px) { .tiers { grid-template-columns: repeat(2, 1fr); } }
+
+  .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; margin-top: 12px; }
+  .cell { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 9px; background: var(--panel2);
+    font-size: .9rem; border: 1px solid transparent; }
+  .cell.hit { border-color: #ffcb05; background: #3a3420; }
+  .cell .pct { margin-left: auto; color: var(--muted); font-size: .8rem; }
+  .center { text-align: center; }
+  .big { font-size: 3rem; font-weight: 900; color: #ffcb05; margin: 6px 0; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .hidden { display: none !important; }
+  footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 24px; line-height: 1.5; }
+  .progress { display: flex; gap: 6px; }
+  .progress span { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .progress span.done { background: #ffcb05; }
+  .progress span.now { background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>POKRILLION</h1>
+    <div class="tag">Pokémon trivia where the <em>rarest</em> answer wins.</div>
+  </header>
+
+  <!-- Start screen -->
+  <section id="start" class="panel">
+    <p style="margin-top:0">Each round asks a question with lots of correct answers. Most trainers give the obvious ones.
+      Your job is to find the answers nobody else thinks of. Every guess is caught in a ball based on how rare it is:</p>
+    <div class="tiers" id="tierLegend"></div>
+    <p class="sub">5 rounds · 3 guesses per round · wrong answers break free for 0 points.</p>
+    <div class="row"><button id="startBtn">Start</button></div>
+  </section>
+
+  <!-- Game screen -->
+  <section id="game" class="hidden">
+    <div class="panel">
+      <div class="hud">
+        <div>Round <b id="roundNum">1</b> / <span id="roundTotal">5</span></div>
+        <div class="progress" id="progress"></div>
+        <div>Score <b id="score">0</b></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="question" id="qText"></div>
+      <div class="sub" id="qSub"></div>
+      <form id="guessForm" autocomplete="off">
+        <input type="text" id="guessInput" placeholder="Type your answer…" aria-label="Your answer">
+        <button type="submit" id="guessBtn">Throw</button>
+      </form>
+      <div class="msg" id="msg"></div>
+      <div class="guesses" id="guesses"></div>
+      <div class="row">
+        <button class="secondary" id="giveUpBtn">Skip remaining guesses</button>
+        <button id="nextBtn" class="hidden">Next round</button>
+      </div>
+    </div>
+    <div class="panel hidden" id="reveal">
+      <div style="font-weight:700">Every answer on the board</div>
+      <div class="sub">Rarest first. Percentages are the estimated share of trainers who would say it.</div>
+      <div class="board" id="board"></div>
+    </div>
+  </section>
+
+  <!-- End screen -->
+  <section id="end" class="panel hidden center">
+    <div class="sub">Final score</div>
+    <div class="big" id="finalScore">0</div>
+    <div id="rank" style="font-weight:700;font-size:1.2rem"></div>
+    <div class="tiers" id="haul"></div>
+    <div class="row"><button id="againBtn">Play again</button></div>
+  </section>
+
+  <footer>Rarity percentages are estimates of how often players would give each answer, not survey results.<br>
+    Fan-made trivia game. Pokémon is a trademark of Nintendo, Game Freak and Creatures.</footer>
+</div>
+
+<script>
+// ---------- Tiers ----------
+const TIERS = [
+  { id: "master", name: "Master Ball", max: 5,   pts: 100, line: "Nobody saw that coming!" },
+  { id: "ultra",  name: "Ultra Ball",  max: 15,  pts: 50,  line: "A rare catch!" },
+  { id: "great",  name: "Great Ball",  max: 35,  pts: 25,  line: "Nice catch." },
+  { id: "poke",   name: "Poké Ball",   max: 100, pts: 10,  line: "Everyone knows that one." },
+];
+const tierFor = p => TIERS.find(t => p <= t.max);
+const MISS = { id: "miss", name: "Broke free", pts: 0 };
+
+// ---------- Questions ----------
+// Each answer: [display name, estimated % of players who'd say it, ...extra accepted spellings]
+const QUESTIONS = [
+  { q: "Name a Fire-type starter Pokémon (first stage only).", a: [
+    ["Charmander",70],["Cyndaquil",30],["Torchic",25],["Chimchar",12],["Tepig",10],["Fennekin",9],["Litten",10],["Scorbunny",8],["Fuecoco",6]]},
+  { q: "Name a Water-type starter Pokémon (first stage only).", a: [
+    ["Squirtle",70],["Totodile",30],["Mudkip",35],["Piplup",22],["Oshawott",10],["Froakie",14],["Popplio",6],["Sobble",8],["Quaxly",5]]},
+  { q: "Name a Grass-type starter Pokémon (first stage only).", a: [
+    ["Bulbasaur",70],["Chikorita",25],["Treecko",22],["Turtwig",18],["Snivy",10],["Chespin",5],["Rowlet",14],["Grookey",8],["Sprigatito",7]]},
+  { q: "Name one of Eevee's evolutions.", a: [
+    ["Vaporeon",50],["Jolteon",45],["Flareon",50],["Espeon",35],["Umbreon",45],["Leafeon",14],["Glaceon",12],["Sylveon",30]]},
+  { q: "Name one of the 18 Pokémon types.", a: [
+    ["Fire",65],["Water",65],["Grass",55],["Electric",45],["Psychic",22],["Normal",12],["Dragon",18],["Ghost",14],["Fighting",10],
+    ["Flying",10],["Ice",8],["Poison",8],["Ground",6],["Bug",7],["Rock",7],["Dark",9],["Fairy",6],["Steel",3]]},
+  { q: "Name a region from any Pokémon game or series.", sub: "Spin-offs and the anime count too.", a: [
+    ["Kanto",70],["Johto",45],["Hoenn",35],["Sinnoh",35],["Unova",20],["Kalos",20],["Alola",25],["Galar",22],["Paldea",18],
+    ["Hisui",8],["Orre",3],["Orange Islands",4,"Orange Archipelago"],["Sevii Islands",2,"Sevii"],["Kitakami",4],["Fiore",1],["Almia",1],
+    ["Oblivia",1],["Ransei",1],["Pasio",2],["Aeos Island",1,"Aeos"],["Lental",1],["Ferrum",1]]},
+  { q: "Name a type of Poké Ball.", sub: "Fitting, right? Leave off the word “Ball” if you like.", strip: ["ball$"], a: [
+    ["Poké Ball",60,"Poke","Pokeball"],["Great Ball",50],["Ultra Ball",50],["Master Ball",60],["Safari Ball",15],["Premier Ball",8],
+    ["Net Ball",6],["Dive Ball",5],["Nest Ball",5],["Repeat Ball",4],["Timer Ball",6],["Luxury Ball",7],["Dusk Ball",8],["Heal Ball",4],
+    ["Quick Ball",9],["Cherish Ball",2],["Fast Ball",2],["Level Ball",2],["Lure Ball",3],["Heavy Ball",2],["Love Ball",3],["Friend Ball",2],
+    ["Moon Ball",3],["Sport Ball",1],["Park Ball",1],["Dream Ball",2],["Beast Ball",3],["Strange Ball",1],["Feather Ball",1],["Wing Ball",1],
+    ["Jet Ball",1],["Gigaton Ball",1],["Leaden Ball",1],["Origin Ball",1],["GS Ball",2]]},
+  { q: "Name a Pokémon professor.", sub: "Games, anime or spin-offs.", strip: ["^professor","^prof"], a: [
+    ["Oak",80,"Samuel Oak"],["Elm",25],["Birch",20],["Rowan",15],["Juniper",12],["Sycamore",12],["Kukui",15],["Magnolia",6],["Sada",5],
+    ["Turo",5],["Burnet",3],["Sonia",4],["Willow",6],["Laventon",3],["Ivy",2],["Krane",1],["Hastings",1]]},
+  { q: "Name a Kanto Gym Leader.", sub: "Any game set in Kanto counts.", a: [
+    ["Brock",75],["Misty",75],["Lt. Surge",30,"Surge","Lieutenant Surge","Lt Surge"],["Erika",25],["Koga",20],["Sabrina",25],
+    ["Blaine",15],["Giovanni",25],["Janine",5],["Blue",4,"Gary"]]},
+  { q: "Name a Pokémon Champion.", sub: "Main series games or the anime.", a: [
+    ["Cynthia",45],["Lance",25],["Steven",25,"Steven Stone"],["Blue",25,"Gary"],["Red",15],["Leon",25],["Wallace",10],["Diantha",8],
+    ["Iris",5],["Alder",6],["Kukui",6],["Geeta",4],["Nemona",6],["Ash",15,"Ash Ketchum"],["Mustard",2],["Kieran",2]]},
+  { q: "Name one of Ash's travelling companions in the anime.", a: [
+    ["Misty",75],["Brock",70],["May",25],["Dawn",25],["Serena",20],["Iris",12],["Cilan",10],["Tracey",6,"Tracey Sketchit"],["Max",8],
+    ["Clemont",9],["Bonnie",6],["Goh",6],["Chloe",2],["Lillie",4],["Kiawe",2],["Mallow",2],["Lana",2],["Sophocles",1]]},
+  { q: "Name a member of Team Rocket.", sub: "Games or anime.", a: [
+    ["Jessie",60],["James",60],["Meowth",55],["Giovanni",40],["Butch",6],["Cassidy",6],["Archer",4],["Ariana",3],["Proton",2],
+    ["Petrel",2],["Matori",1],["Madame Boss",1]]},
+  { q: "Name a Legendary or Mythical Pokémon from Generations 1 or 2.", a: [
+    ["Mewtwo",60],["Mew",50],["Articuno",35],["Zapdos",35],["Moltres",30],["Lugia",30],["Ho-Oh",20,"Hooh"],["Entei",15],["Suicune",15],
+    ["Raikou",12],["Celebi",10]]},
+  { q: "Name an Electric-type Pokémon from Generation 1.", a: [
+    ["Pikachu",85],["Raichu",40],["Jolteon",20],["Zapdos",20],["Magnemite",15],["Voltorb",12],["Electabuzz",12],["Magneton",8],["Electrode",8]]},
+  { q: "Name a Psychic-type Pokémon from Generation 1.", sub: "Dual types count.", a: [
+    ["Mewtwo",45],["Mew",35],["Alakazam",30],["Abra",25],["Kadabra",20],["Slowpoke",15],["Mr. Mime",12,"Mr Mime"],["Hypno",10],
+    ["Slowbro",8],["Drowzee",6],["Jynx",5],["Exeggutor",5],["Starmie",4],["Exeggcute",3]]},
+  { q: "Name a Pokémon that evolves with a Moon Stone.", sub: "The Pokémon you use the stone on.", a: [
+    ["Clefairy",40],["Jigglypuff",35],["Nidorina",15],["Nidorino",15],["Skitty",5],["Munna",2]]},
+  { q: "Name a Pokémon whose name starts with Z.", a: [
+    ["Zubat",45],["Zapdos",45],["Zigzagoon",15],["Zekrom",18],["Zangoose",8],["Zorua",8],["Zoroark",12],["Zacian",10],["Zamazenta",7],
+    ["Zygarde",8],["Zeraora",4],["Zebstrika",3],["Zweilous",2],["Zarude",2]]},
+  { q: "Name a main-series Pokémon game version.", sub: "Just the version name, like “Red”.", strip: ["^pokemon"], a: [
+    ["Red",55],["Blue",45],["Yellow",25],["Green",3],["Gold",25],["Silver",22],["Crystal",15],["Ruby",18],["Sapphire",15],["Emerald",15],
+    ["FireRed",10,"Fire Red"],["LeafGreen",8,"Leaf Green"],["Diamond",15],["Pearl",12],["Platinum",10],["HeartGold",6,"Heart Gold"],
+    ["SoulSilver",6,"Soul Silver"],["Black",10],["White",9],["Black 2",3],["White 2",3],["X",10],["Y",8],["Omega Ruby",4],
+    ["Alpha Sapphire",4],["Sun",10],["Moon",9],["Ultra Sun",3],["Ultra Moon",3],["Let's Go, Pikachu!",4,"Lets Go Pikachu"],
+    ["Let's Go, Eevee!",3,"Lets Go Eevee"],["Sword",15],["Shield",12],["Brilliant Diamond",5],["Shining Pearl",4],
+    ["Legends: Arceus",8,"Arceus","Legends Arceus"],["Scarlet",12],["Violet",10],["Legends: Z-A",5,"Legends ZA","ZA","Z-A"]]},
+];
+
+// ---------- Matching ----------
+const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+function applyStrip(s, strip) {
+  for (const r of strip || []) { const t = s.replace(new RegExp(r), ""); if (t) s = t; }
+  return s;
+}
+function lev(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+function findAnswer(q, guess) {
+  const g = applyStrip(norm(guess), q.strip);
+  if (!g) return null;
+  let best = null, bestD = Infinity;
+  for (const ans of q.a) {
+    const [name, , ...alts] = ans;
+    for (const form of [name, ...alts]) {
+      const f = applyStrip(norm(form), q.strip);
+      if (f === g) return ans;
+      const allowed = f.length >= 9 ? 2 : f.length >= 5 ? 1 : 0;
+      const dist = lev(f, g);
+      if (dist <= allowed && dist < bestD) { best = ans; bestD = dist; }
+    }
+  }
+  return best;
+}
+
+// ---------- Game state ----------
+const ROUNDS = 5, GUESSES = 3;
+let deck = [], round = 0, score = 0, used = [], caughtTiers = {};
+const $ = id => document.getElementById(id);
+const ball = (id, sm) => `<span class="ball ${id}${sm ? " sm" : ""}"></span>`;
+
+function renderLegend() {
+  $("tierLegend").innerHTML = TIERS.map((t, i) => {
+    const lo = i === 0 ? 0 : TIERS[i-1].max + 1;
+    return `<div class="tier">${ball(t.id)}<b>${t.name}</b>${lo}–${t.max}% said it<br>${t.pts} pts</div>`;
+  }).reverse().join("");
+}
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function startGame() {
+  deck = shuffle(QUESTIONS.slice()).slice(0, ROUNDS);
+  round = 0; score = 0; caughtTiers = {};
+  $("roundTotal").textContent = ROUNDS;
+  $("start").classList.add("hidden"); $("end").classList.add("hidden"); $("game").classList.remove("hidden");
+  startRound();
+}
+
+function startRound() {
+  const q = deck[round];
+  used = [];
+  $("roundNum").textContent = round + 1;
+  $("score").textContent = score;
+  $("progress").innerHTML = deck.map((_, i) => `<span class="${i < round ? "done" : i === round ? "now" : ""}"></span>`).join("");
+  $("qText").textContent = q.q;
+  $("qSub").textContent = `${q.sub ? q.sub + " · " : ""}${q.a.length} answers on the board`;
+  $("guesses").innerHTML = ""; $("msg").textContent = "";
+  $("reveal").classList.add("hidden");
+  $("nextBtn").classList.add("hidden"); $("giveUpBtn").classList.remove("hidden");
+  $("guessInput").disabled = false; $("guessBtn").disabled = false;
+  $("guessInput").value = ""; $("guessInput").focus();
+}
+
+function guessesLeft() { return GUESSES - used.length; }
+
+function submitGuess(e) {
+  e.preventDefault();
+  const q = deck[round], raw = $("guessInput").value.trim();
+  if (!raw) return;
+  const ans = findAnswer(q, raw);
+  if (ans && used.some(u => u.ans === ans)) { $("msg").textContent = `You've already caught ${ans[0]}. Try something else.`; return; }
+  const tier = ans ? tierFor(ans[1]) : MISS;
+  used.push({ raw, ans, tier });
+  score += tier.pts;
+  caughtTiers[tier.id] = (caughtTiers[tier.id] || 0) + 1;
+  $("score").textContent = score;
+  const el = document.createElement("div");
+  el.className = "guess";
+  el.style.setProperty("--c", `var(--${tier.id})`);
+  el.innerHTML = ans
+    ? `${ball(tier.id)}<div><div class="name">${ans[0]}</div><div class="meta">${tier.name} · ${ans[1]}% said this</div></div><div class="pts">+${tier.pts}</div>`
+    : `${ball("miss")}<div><div class="name"></div><div class="meta">Not on the board. It broke free!</div></div><div class="pts">+0</div>`;
+  if (!ans) el.querySelector(".name").textContent = raw;
+  $("guesses").appendChild(el);
+  $("msg").textContent = ans ? tier.line : "";
+  $("guessInput").value = "";
+  if (guessesLeft() <= 0) endRound(); else $("msg").textContent += ` ${guessesLeft()} guess${guessesLeft() === 1 ? "" : "es"} left.`;
+}
+
+function endRound() {
+  const q = deck[round];
+  $("guessInput").disabled = true; $("guessBtn").disabled = true;
+  $("giveUpBtn").classList.add("hidden");
+  $("nextBtn").textContent = round + 1 < ROUNDS ? "Next round" : "See results";
+  $("nextBtn").classList.remove("hidden"); $("nextBtn").focus();
+  const hits = new Set(used.map(u => u.ans).filter(Boolean));
+  $("board").innerHTML = q.a.slice().sort((a, b) => a[1] - b[1]).map(a =>
+    `<div class="cell${hits.has(a) ? " hit" : ""}">${ball(tierFor(a[1]).id, true)}<span>${a[0]}</span><span class="pct">${a[1]}%</span></div>`).join("");
+  $("reveal").classList.remove("hidden");
+}
+
+function nextRound() {
+  round++;
+  if (round < ROUNDS) startRound(); else endGame();
+}
+
+function endGame() {
+  $("game").classList.add("hidden"); $("end").classList.remove("hidden");
+  $("finalScore").textContent = score;
+  const max = ROUNDS * GUESSES * 100, pct = score / max;
+  $("rank").textContent = pct >= .7 ? "Pokrillion Master" : pct >= .45 ? "Elite Four material" : pct >= .25 ? "Gym Leader" : pct >= .1 ? "Ace Trainer" : "Youngster";
+  $("haul").innerHTML = [...TIERS.slice().reverse(), MISS].map(t =>
+    `<div class="tier">${ball(t.id)}<b>${caughtTiers[t.id] || 0}</b>${t.name}</div>`).join("");
+  $("haul").style.gridTemplateColumns = "repeat(auto-fit, minmax(100px, 1fr))";
+}
+
+renderLegend();
+$("startBtn").onclick = startGame;
+$("againBtn").onclick = startGame;
+$("guessForm").onsubmit = submitGuess;
+$("giveUpBtn").onclick = endRound;
+$("nextBtn").onclick = nextRound;
+</script>
+</body>
+</html>
