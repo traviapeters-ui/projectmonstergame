@@ -93,8 +93,12 @@
     <p style="margin-top:0">Each round asks a question with lots of correct answers. Most trainers give the obvious ones.
       Your job is to find the answers nobody else thinks of. Every guess is caught in a ball based on how rare it is:</p>
     <div class="tiers" id="tierLegend"></div>
-    <p class="sub">5 rounds · 3 guesses per round · wrong answers break free for 0 points.</p>
-    <div class="row"><button id="startBtn">Start</button></div>
+    <p class="sub"><span id="qCount"></span> questions in the pool · 3 guesses per round · wrong answers break free for 0 points.</p>
+    <div class="row" role="group" aria-label="Game length">
+      <button class="secondary len" data-rounds="5" id="len5">Quick · 5 rounds</button>
+      <button class="secondary len" data-rounds="10" id="len10">Long · 10 rounds</button>
+      <button class="secondary len" data-rounds="20" id="len20">Marathon · 20 rounds</button>
+    </div>
   </section>
 
   <!-- Game screen -->
@@ -133,7 +137,7 @@
     <div class="big" id="finalScore">0</div>
     <div id="rank" style="font-weight:700;font-size:1.2rem"></div>
     <div class="tiers" id="haul"></div>
-    <div class="row"><button id="againBtn">Play again</button></div>
+    <div class="row"><button id="againBtn">Play again</button><button class="secondary" id="menuBtn">Change length</button></div>
   </section>
 
   <footer>Rarity percentages are estimates of how often players would give each answer, not survey results.<br>
@@ -210,6 +214,207 @@ const QUESTIONS = [
     ["Alpha Sapphire",4],["Sun",10],["Moon",9],["Ultra Sun",3],["Ultra Moon",3],["Let's Go, Pikachu!",4,"Lets Go Pikachu"],
     ["Let's Go, Eevee!",3,"Lets Go Eevee"],["Sword",15],["Shield",12],["Brilliant Diamond",5],["Shining Pearl",4],
     ["Legends: Arceus",8,"Arceus","Legends Arceus"],["Scarlet",12],["Violet",10],["Legends: Z-A",5,"Legends ZA","ZA","Z-A"]]},
+  // ----- Types by generation -----
+  { q: "Name a Dark-type Pokémon introduced in Generations 2–4.", sub: "Dual types count.", a: [
+    ["Umbreon",45],["Tyranitar",35],["Houndoom",25],["Houndour",15],["Murkrow",18],["Sneasel",15],["Absol",25],["Mightyena",14],
+    ["Poochyena",14],["Sharpedo",10],["Carvanha",4],["Sableye",12],["Cacturne",5],["Shiftry",5],["Nuzleaf",3],["Crawdaunt",4],
+    ["Honchkrow",12],["Weavile",15],["Darkrai",20],["Spiritomb",6],["Drapion",4],["Stunky",3],["Skuntank",3]]},
+  { q: "Name a Ghost-type Pokémon from Generations 1–3.", sub: "Dual types count.", a: [
+    ["Gengar",65],["Haunter",40],["Gastly",40],["Misdreavus",12],["Sableye",10],["Shedinja",6],["Shuppet",6],["Banette",8],
+    ["Duskull",7],["Dusclops",6]]},
+  { q: "Name a Dragon-type Pokémon from Generations 1–3.", sub: "Dual types count.", a: [
+    ["Dragonite",55],["Dratini",35],["Dragonair",30],["Salamence",25],["Rayquaza",30],["Latios",15],["Latias",15],["Flygon",15],
+    ["Altaria",10],["Kingdra",8],["Bagon",6],["Shelgon",3],["Vibrava",3]]},
+  { q: "Name a Steel-type Pokémon from Generations 1–2.", sub: "Types as they are today.", a: [
+    ["Steelix",45],["Scizor",40],["Skarmory",25],["Magnemite",12],["Magneton",8],["Forretress",8]]},
+  { q: "Name a Pokémon from Generations 1–2 that is Fairy-type today.", sub: "Dual types count.", a: [
+    ["Clefairy",45],["Jigglypuff",40],["Togepi",30],["Clefable",15],["Wigglytuff",12],["Snubbull",10],["Granbull",6],["Marill",10],
+    ["Azumarill",10],["Togetic",8],["Mr. Mime",5,"Mr Mime"],["Cleffa",4],["Igglybuff",4]]},
+
+  // ----- Starters at every stage -----
+  { q: "Name a middle-stage starter evolution from Generations 1–4.", sub: "Like Charmeleon.", a: [
+    ["Charmeleon",50],["Ivysaur",40],["Wartortle",40],["Quilava",18],["Croconaw",12],["Bayleef",10],["Combusken",18],["Grovyle",15],
+    ["Marshtomp",15],["Monferno",8],["Grotle",8],["Prinplup",8]]},
+  { q: "Name a middle-stage starter evolution from Generations 5–9.", a: [
+    ["Frogadier",20],["Braixen",15],["Torracat",14],["Dartrix",14],["Servine",10],["Pignite",12],["Dewott",9],["Quilladin",5],
+    ["Brionne",5],["Thwackey",5],["Raboot",10],["Drizzile",7],["Floragato",8],["Crocalor",6],["Quaxwell",6]]},
+  { q: "Name a fully evolved starter Pokémon.", a: [
+    ["Charizard",75],["Blastoise",45],["Venusaur",40],["Typhlosion",15],["Feraligatr",12],["Meganium",8],["Blaziken",25],["Swampert",20],
+    ["Sceptile",18],["Infernape",15],["Empoleon",10],["Torterra",10],["Serperior",6],["Emboar",4],["Samurott",5],["Greninja",25],
+    ["Delphox",6],["Chesnaught",2],["Incineroar",10],["Decidueye",8],["Primarina",5],["Cinderace",8],["Inteleon",5],["Rillaboom",5],
+    ["Meowscarada",6],["Skeledirge",4],["Quaquaval",3]]},
+
+  // ----- Pokédex -----
+  { q: "Name a Pokémon numbered #001–#010 in the National Pokédex.", a: [
+    ["Bulbasaur",60],["Charmander",55],["Squirtle",55],["Charizard",45],["Ivysaur",25],["Venusaur",30],["Charmeleon",25],
+    ["Wartortle",22],["Blastoise",30],["Caterpie",5]]},
+  { q: "Name a Pokémon numbered #100–#110 in the National Pokédex.", a: [
+    ["Voltorb",30],["Electrode",25],["Cubone",30],["Marowak",15],["Exeggcute",8],["Exeggutor",10],["Hitmonlee",15],["Hitmonchan",15],
+    ["Koffing",15],["Weezing",10],["Lickitung",6]]},
+  { q: "Name a Pokémon numbered #140–#151 in the National Pokédex.", a: [
+    ["Mew",60],["Mewtwo",60],["Dragonite",35],["Snorlax",30],["Articuno",25],["Zapdos",25],["Moltres",25],["Dratini",15],
+    ["Dragonair",15],["Aerodactyl",8],["Kabutops",4],["Kabuto",4]]},
+  { q: "Name a Pokémon with an Alolan form.", a: [
+    ["Vulpix",45],["Ninetales",30],["Raichu",35],["Exeggutor",35],["Diglett",30],["Dugtrio",15],["Meowth",25],["Persian",8],
+    ["Rattata",15],["Raticate",8],["Sandshrew",15],["Sandslash",8],["Marowak",12],["Grimer",8],["Muk",8],["Geodude",10],
+    ["Graveler",4],["Golem",5]]},
+  { q: "Name a Pokémon with a Galarian form.", a: [
+    ["Ponyta",35],["Rapidash",20],["Meowth",25],["Slowpoke",25],["Slowbro",10],["Slowking",6],["Farfetch'd",15,"Farfetchd"],
+    ["Weezing",12],["Mr. Mime",10,"Mr Mime"],["Articuno",12],["Zapdos",12],["Moltres",12],["Corsola",10],["Zigzagoon",10],
+    ["Linoone",4],["Darumaka",5],["Darmanitan",6],["Yamask",6],["Stunfisk",8]]},
+  { q: "Name a fossil Pokémon.", sub: "Revived from a fossil, or its evolution.", a: [
+    ["Aerodactyl",45],["Omanyte",35],["Kabuto",35],["Omastar",20],["Kabutops",20],["Lileep",8],["Cradily",4],["Anorith",6],
+    ["Armaldo",5],["Cranidos",6],["Rampardos",5],["Shieldon",5],["Bastiodon",4],["Tirtouga",3],["Carracosta",2],["Archen",3],
+    ["Archeops",3],["Tyrunt",6],["Tyrantrum",6],["Amaura",5],["Aurorus",4],["Dracozolt",3],["Arctozolt",2],["Dracovish",4],["Arctovish",2]]},
+  { q: "Name a baby Pokémon.", sub: "The pre-evolutions added after the originals.", a: [
+    ["Pichu",60],["Togepi",30],["Igglybuff",15],["Cleffa",15],["Riolu",15],["Munchlax",12],["Happiny",10],["Elekid",8],["Magby",8],
+    ["Smoochum",8],["Azurill",6],["Tyrogue",5],["Bonsly",5],["Wynaut",5],["Mime Jr.",5,"Mime Jr","Mime Junior"],["Budew",3],
+    ["Chingling",2],["Mantyke",2],["Toxel",3]]},
+  { q: "Name a Pokémon that evolves by trading.", sub: "With or without a held item.", a: [
+    ["Kadabra",40],["Machoke",35],["Haunter",40],["Graveler",30],["Onix",15],["Scyther",15],["Poliwhirl",5],["Slowpoke",5],
+    ["Seadra",5],["Porygon",6],["Porygon2",3],["Rhydon",4],["Electabuzz",4],["Magmar",4],["Feebas",6],["Clamperl",3],["Dusclops",3],
+    ["Boldore",6],["Gurdurr",5],["Karrablast",3],["Shelmet",3],["Spritzee",2],["Swirlix",2],["Phantump",4],["Pumpkaboo",3]]},
+  { q: "Name a Legendary or Mythical Pokémon from Generations 3–4.", a: [
+    ["Rayquaza",45],["Groudon",40],["Kyogre",40],["Arceus",35],["Dialga",30],["Palkia",30],["Giratina",30],["Darkrai",15],["Latios",15],
+    ["Latias",15],["Jirachi",15],["Deoxys",18],["Regirock",10],["Regice",10],["Registeel",10],["Regigigas",6],["Heatran",6],
+    ["Cresselia",6],["Shaymin",8],["Manaphy",8],["Uxie",4],["Mesprit",4],["Azelf",4],["Phione",2]]},
+  { q: "Name an Ultra Beast.", a: [
+    ["Nihilego",30],["Buzzwole",25],["Pheromosa",15],["Kartana",15],["Celesteela",12],["Guzzlord",15],["Xurkitree",10],["Poipole",8],
+    ["Naganadel",6],["Stakataka",4],["Blacephalon",4]]},
+  { q: "Name a Paradox Pokémon.", sub: "Past and future forms from Scarlet & Violet.", a: [
+    ["Koraidon",30],["Miraidon",30],["Flutter Mane",25],["Great Tusk",20],["Iron Valiant",15],["Roaring Moon",15],["Iron Hands",15],
+    ["Iron Bundle",12],["Iron Treads",8],["Scream Tail",8],["Brute Bonnet",5],["Slither Wing",5],["Sandy Shocks",6],["Iron Moth",6],
+    ["Iron Jugulis",4],["Iron Thorns",4],["Walking Wake",6],["Iron Leaves",5],["Gouging Fire",3],["Raging Bolt",4],["Iron Boulder",2],
+    ["Iron Crown",2]]},
+  { q: "Name a Pokémon Ash owned in the original series.", sub: "Kanto and the Orange Islands.", a: [
+    ["Pikachu",80],["Charizard",45],["Bulbasaur",40],["Squirtle",40],["Charmander",30],["Butterfree",25],["Pidgeotto",20],
+    ["Charmeleon",12],["Caterpie",10],["Metapod",8],["Primeape",8],["Krabby",8],["Kingler",6],["Muk",6],["Tauros",6],["Lapras",12],
+    ["Snorlax",8],["Pidgeot",4],["Haunter",2]]},
+
+  // ----- Games -----
+  { q: "Name a Pokémon spin-off game.", sub: "Not a main-series version.", strip: ["^pokemon"], a: [
+    ["Pokémon GO",60,"GO","Pokemon Go"],["Pokémon Snap",25,"Snap"],["Mystery Dungeon",20],["Pokémon Stadium",20,"Stadium"],
+    ["Pokémon Unite",15,"Unite"],["Pokkén Tournament",8,"Pokken"],["Detective Pikachu",12],["Pokémon Colosseum",8,"Colosseum"],
+    ["Pokémon XD",4,"XD","Gale of Darkness"],["New Pokémon Snap",8],["Pokémon Ranger",6,"Ranger"],["Pokémon Pinball",5,"Pinball"],
+    ["Pokémon Trading Card Game",8,"TCG","Trading Card Game","TCG Pocket","Pokémon TCG Pocket"],["Pokémon Puzzle League",3,"Puzzle League"],
+    ["Hey You, Pikachu!",3,"Hey You Pikachu"],["Pokémon Conquest",3,"Conquest"],["Pokémon Masters EX",5,"Masters","Masters EX"],
+    ["Pokémon Sleep",5,"Sleep"],["Pokémon Shuffle",3,"Shuffle"],["Pokémon Rumble",3,"Rumble"],["Pokémon Café ReMix",2,"Cafe Mix","Cafe Remix"],
+    ["Pokémon Quest",2,"Quest"],["Pokémon Picross",1,"Picross"],["Pokémon Channel",1,"Channel"],["Pokémon Dash",1,"Dash"],
+    ["Pokémon Battle Revolution",1,"Battle Revolution"],["Pokémon Trozei!",1,"Trozei"],["Pokémon Smile",1,"Smile"]]},
+  { q: "Name a villainous team from the Pokémon games.", strip: ["^team"], a: [
+    ["Team Rocket",75],["Team Aqua",25],["Team Magma",25],["Team Galactic",22],["Team Plasma",20],["Team Flare",15],["Team Skull",15],
+    ["Team Yell",8],["Team Star",8],["Aether Foundation",4,"Aether"],["Macro Cosmos",3],["Cipher",2],["Team Snagem",1,"Snagem"],
+    ["Team Rainbow Rocket",3,"Rainbow Rocket"],["Go-Rock Squad",1],["Team Dim Sun",1,"Dim Sun"],["Pincher",1,"Pinchers"]]},
+  { q: "Name the leader or boss of a villainous team.", sub: "Main series or spin-offs.", a: [
+    ["Giovanni",65],["Cyrus",20],["Ghetsis",18],["Lysandre",15],["Maxie",12],["Archie",12],["Guzma",10],["Lusamine",10],["N",6],
+    ["Rose",5,"Chairman Rose"],["Penny",4,"Cassiopeia"],["Colress",3],["Evice",1],["Greevil",1]]},
+  { q: "Name a rival from the main-series games.", a: [
+    ["Blue",45,"Gary"],["Silver",30],["Hop",20],["Barry",12],["Hau",12],["Wally",10],["Brendan",6],["May",8],["Cheren",6],["Bianca",6],
+    ["N",8],["Hugh",3],["Shauna",4],["Tierno",2],["Trevor",2],["Calem",3],["Serena",5],["Gladion",6],["Bede",5],["Marnie",8],
+    ["Nemona",10],["Arven",6],["Penny",3],["Kieran",4]]},
+
+  // ----- People -----
+  { q: "Name a Johto Gym Leader.", a: [
+    ["Whitney",35],["Falkner",25],["Bugsy",25],["Morty",22],["Clair",22],["Jasmine",20],["Chuck",15],["Pryce",12]]},
+  { q: "Name a Hoenn Gym Leader.", a: [
+    ["Norman",30],["Wallace",22],["Roxanne",20],["Flannery",20],["Brawly",14],["Wattson",14],["Winona",14],["Juan",6],["Tate",6],["Liza",6]]},
+  { q: "Name a Sinnoh Gym Leader.", a: [
+    ["Volkner",25],["Roark",22],["Gardenia",20],["Fantina",15],["Candice",15],["Maylene",12],["Byron",10],["Crasher Wake",10,"Wake"]]},
+  { q: "Name a Galar Gym Leader.", a: [
+    ["Raihan",35],["Nessa",30],["Kabu",20],["Milo",18],["Piers",18],["Bea",14],["Allister",10],["Opal",12],["Gordie",6],["Melony",6]]},
+  { q: "Name a Paldea Gym Leader.", a: [
+    ["Iono",35],["Grusha",15],["Larry",20],["Katy",12],["Brassius",8],["Kofu",8],["Ryme",10],["Tulip",8]]},
+  { q: "Name an Elite Four member from any region.", a: [
+    ["Lance",30],["Bruno",25],["Lorelei",20],["Agatha",20],["Karen",15],["Will",10],["Koga",8],["Sidney",6],["Phoebe",6],["Glacia",6],
+    ["Drake",6],["Aaron",4],["Bertha",4],["Flint",5],["Lucian",5],["Shauntal",3],["Grimsley",3],["Caitlin",4],["Marshal",3],["Malva",3],
+    ["Siebold",2],["Wikstrom",2],["Drasna",2],["Hala",3],["Olivia",3],["Acerola",5],["Kahili",2],["Molayne",1],["Rika",2],["Poppy",4],
+    ["Larry",4],["Hassel",2],["Lacey",1],["Drayton",1],["Crispin",1],["Amarys",1]]},
+
+  // ----- Places -----
+  { q: "Name a city or town in Kanto.", strip: ["(town|city|island)$"], a: [
+    ["Pallet Town",60],["Viridian City",35],["Pewter City",30],["Cerulean City",35],["Vermilion City",25],["Lavender Town",30],
+    ["Celadon City",20],["Saffron City",20],["Fuchsia City",15],["Cinnabar Island",20],["Indigo Plateau",6]]},
+  { q: "Name a city or town in Johto.", strip: ["(town|city)$"], a: [
+    ["New Bark Town",30],["Goldenrod City",30],["Ecruteak City",20],["Violet City",20],["Azalea Town",15],["Cherrygrove City",10],
+    ["Olivine City",12],["Cianwood City",10],["Mahogany Town",10],["Blackthorn City",12]]},
+  { q: "Name a Kanto location that isn't a town or city.", sub: "Caves, buildings, forests and more.", a: [
+    ["Mt. Moon",40,"Mount Moon","Mt Moon"],["Viridian Forest",30],["Rock Tunnel",15],["Safari Zone",25],["Victory Road",20],
+    ["Pokémon Tower",15,"Pokemon Tower","Lavender Tower"],["Seafoam Islands",8,"Seafoam"],["Power Plant",8],["Silph Co.",12,"Silph","Silph Co"],
+    ["S.S. Anne",10,"SS Anne"],["Cerulean Cave",5,"Unknown Dungeon"],["Diglett's Cave",6,"Digletts Cave"],["Game Corner",5],
+    ["Pokémon Mansion",5,"Pokemon Mansion","Cinnabar Mansion"]]},
+
+  // ----- Items -----
+  { q: "Name an evolution stone.", sub: "Leave off “Stone” if you like.", strip: ["stone$"], a: [
+    ["Fire Stone",55],["Water Stone",50],["Thunder Stone",50],["Moon Stone",35],["Leaf Stone",35],["Sun Stone",15],["Ice Stone",8],
+    ["Shiny Stone",6],["Dusk Stone",6],["Dawn Stone",5],["Oval Stone",1]]},
+  { q: "Name a Berry.", sub: "Leave off “Berry” if you like.", strip: ["berry$"], a: [
+    ["Oran",40],["Sitrus",30],["Razz",25],["Pecha",15],["Cheri",10],["Chesto",10],["Rawst",8],["Aspear",6],["Leppa",8],["Persim",5],
+    ["Lum",12],["Nanab",8],["Pinap",10],["Bluk",3],["Wepear",3],["Figy",4],["Wiki",4],["Mago",4],["Aguav",2],["Iapapa",2],["Pomeg",3],
+    ["Kelpsy",2],["Qualot",2],["Hondew",2],["Grepa",2],["Tamato",2],["Cornn",1],["Magost",1],["Rabuta",1],["Nomel",1],["Spelon",1],
+    ["Pamtre",1],["Watmel",1],["Durin",1],["Belue",1],["Occa",2],["Passho",1],["Wacan",1],["Rindo",1],["Yache",2],["Chople",1],
+    ["Kebia",1],["Shuca",1],["Coba",1],["Payapa",1],["Tanga",1],["Charti",1],["Kasib",1],["Haban",1],["Colbur",1],["Babiri",1],
+    ["Chilan",1],["Roseli",1],["Liechi",2],["Ganlon",1],["Salac",2],["Petaya",1],["Apicot",1],["Lansat",1],["Starf",2],["Enigma",2],
+    ["Micle",1],["Custap",1],["Jaboca",1],["Rowap",1],["Kee",1],["Maranga",1],["Golden Razz",2],["Silver Pinap",1]]},
+  { q: "Name a held item that boosts one type's moves.", sub: "Not Plates or Gems.", a: [
+    ["Charcoal",30],["Mystic Water",25],["Miracle Seed",20],["Magnet",15],["Never-Melt Ice",8,"Nevermelt Ice"],["Black Belt",8],
+    ["Poison Barb",6],["Soft Sand",6],["Sharp Beak",6],["Twisted Spoon",8],["Silver Powder",5],["Hard Stone",6],["Spell Tag",8],
+    ["Dragon Fang",8],["Black Glasses",6],["Metal Coat",10],["Silk Scarf",5],["Fairy Feather",2]]},
+  { q: "Name a competitive held item.", sub: "Berries don't count.", a: [
+    ["Leftovers",50],["Choice Scarf",25],["Choice Band",25],["Life Orb",25],["Focus Sash",20],["Choice Specs",15],["Assault Vest",12],
+    ["Rocky Helmet",8],["Eviolite",8],["Black Sludge",6],["Heavy-Duty Boots",6],["Weakness Policy",5],["Air Balloon",5],["Toxic Orb",4],
+    ["Flame Orb",4],["Expert Belt",4],["Light Clay",4],["White Herb",3],["Mental Herb",2],["Power Herb",3],["Red Card",2],
+    ["Eject Button",2],["Eject Pack",1],["Booster Energy",4],["Covert Cloak",2],["Clear Amulet",2],["Loaded Dice",3],["Shell Bell",3],
+    ["Quick Claw",6],["King's Rock",4,"Kings Rock"],["Scope Lens",3],["Focus Band",3],["Bright Powder",2],["Muscle Band",1],
+    ["Wise Glasses",1],["Light Ball",4],["Thick Club",2],["Iron Ball",1],["Sticky Barb",1],["Shed Shell",1],["Big Root",1],["Grip Claw",1],
+    ["Binding Band",1],["Metronome",1]]},
+  { q: "Name a healing item from your Bag.", sub: "Potions, status cures, revives and food.", a: [
+    ["Potion",55],["Super Potion",35],["Hyper Potion",30],["Max Potion",30],["Full Restore",25],["Revive",30],["Max Revive",15],
+    ["Full Heal",12],["Antidote",15],["Paralyze Heal",8,"Parlyz Heal"],["Awakening",6],["Burn Heal",8],["Ice Heal",6],["Ether",5],
+    ["Max Ether",3],["Elixir",4],["Max Elixir",3],["Fresh Water",4],["Soda Pop",3],["Lemonade",3],["Moomoo Milk",4],["Energy Powder",2],
+    ["Energy Root",2],["Heal Powder",1],["Revival Herb",2],["Sacred Ash",2],["Berry Juice",1],["Lava Cookie",2],["Old Gateau",1],
+    ["Rage Candy Bar",1],["Casteliacone",1],["Lumiose Galette",1],["Shalour Sable",1],["Big Malasada",1],["Pewter Crunchies",1]]},
+  { q: "Name a Key Item from Pokémon Red & Blue.", a: [
+    ["Bicycle",40,"Bike"],["Old Rod",20],["Good Rod",12],["Super Rod",15],["Poké Flute",15,"Pokeflute"],["Silph Scope",12],["Town Map",8],
+    ["S.S. Ticket",8,"SS Ticket"],["Card Key",5],["Itemfinder",4],["Exp. All",5,"Exp All"],["Coin Case",3],["Lift Key",2],["Secret Key",2],
+    ["Gold Teeth",2],["Oak's Parcel",8,"Oaks Parcel"],["Bike Voucher",3],["Helix Fossil",8],["Dome Fossil",5],["Old Amber",4],["Pokédex",10,"Pokedex"]]},
+  { q: "Name a move that was a TM in Pokémon Red & Blue.", sub: "TM01 to TM50.", a: [
+    ["Thunderbolt",30],["Ice Beam",25],["Earthquake",25],["Psychic",20],["Hyper Beam",20],["Fire Blast",15],["Blizzard",12],["Thunder",15],
+    ["Body Slam",12],["Dig",10],["Solar Beam",10],["Swords Dance",10],["Toxic",10],["Rest",8],["Double Team",8],["Substitute",8],
+    ["Thunder Wave",6],["Water Gun",6],["Bubble Beam",5],["Rock Slide",5],["Swift",5],["Dream Eater",4],["Explosion",4],["Self-Destruct",3],
+    ["Double-Edge",4],["Take Down",3],["Seismic Toss",3],["Counter",2],["Submission",2],["Mega Punch",3],["Mega Kick",3],["Pay Day",3],
+    ["Reflect",3],["Teleport",3],["Metronome",3],["Fissure",2],["Horn Drill",2],["Mega Drain",2],["Dragon Rage",2],["Razor Wind",1],
+    ["Whirlwind",1],["Rage",1],["Mimic",1],["Bide",1],["Egg Bomb",1],["Skull Bash",1],["Soft-Boiled",1],["Sky Attack",1],["Psywave",1],
+    ["Tri Attack",2]]},
+  { q: "Name a move that has been an HM.", sub: "Generations 1–6.", a: [
+    ["Surf",60],["Fly",55],["Cut",45],["Strength",35],["Flash",25],["Rock Smash",15],["Waterfall",15],["Whirlpool",6],["Dive",6],
+    ["Rock Climb",4],["Defog",4]]},
+  { q: "Name a Fire-type move.", a: [
+    ["Flamethrower",55],["Ember",45],["Fire Blast",35],["Fire Spin",15],["Fire Punch",15],["Flare Blitz",12],["Heat Wave",8],
+    ["Overheat",8],["Will-O-Wisp",8],["Blast Burn",8],["Fire Fang",8],["Flame Wheel",6],["Sacred Fire",5],["Eruption",4],["Blaze Kick",4],
+    ["Sunny Day",3],["Lava Plume",3],["Flame Charge",3],["Magma Storm",2],["Inferno",2],["Fire Pledge",1],["Heat Crash",1],
+    ["Incinerate",1],["Searing Shot",1],["Blue Flare",2],["Fusion Flare",1],["Fiery Dance",1],["Mystical Fire",1],["Fire Lash",1],
+    ["Burn Up",1],["Shell Trap",1],["Mind Blown",1],["Pyro Ball",2],["Burning Jealousy",1],["V-create",1,"V Create"],["Flame Burst",1],
+    ["Temper Flare",1],["Torch Song",1],["Armor Cannon",1],["Bitter Blade",1],["Raging Fury",1]]},
+
+  // ----- Mechanics -----
+  { q: "Name one of the 25 Natures.", a: [
+    ["Adamant",30],["Modest",25],["Jolly",25],["Timid",25],["Brave",12],["Bold",15],["Calm",12],["Careful",8],["Impish",8],["Hasty",8],
+    ["Naive",6],["Quiet",6],["Relaxed",5],["Sassy",5],["Lonely",4],["Naughty",4],["Gentle",3],["Mild",3],["Rash",3],["Lax",2],["Hardy",4],
+    ["Docile",3],["Serious",3],["Bashful",2],["Quirky",2]]},
+  { q: "Name a status condition or battle effect.", sub: "Major status or volatile effects.", a: [
+    ["Poison",50,"Poisoned"],["Paralysis",45,"Paralyzed","Paralyze"],["Burn",45,"Burned"],["Sleep",40,"Asleep"],["Freeze",30,"Frozen"],
+    ["Confusion",25,"Confused"],["Badly Poisoned",6,"Toxic","Bad Poison"],["Infatuation",5,"Infatuated","Attract"],["Flinch",5],
+    ["Frostbite",2],["Drowsy",1,"Drowsiness"],["Curse",2],["Nightmare",1],["Leech Seed",3],["Taunt",2],["Torment",1],["Encore",1],
+    ["Disable",1],["Trapped",1]]},
+  { q: "Name a weather or terrain effect in battle.", a: [
+    ["Rain",50],["Sun",40,"Harsh Sunlight","Sunlight","Sunny"],["Sandstorm",35,"Sand"],["Hail",30],["Snow",8],["Fog",4],
+    ["Electric Terrain",8],["Grassy Terrain",6],["Psychic Terrain",5],["Misty Terrain",5],["Heavy Rain",2],["Extremely Harsh Sunlight",2],
+    ["Strong Winds",1,"Delta Stream"]]},
+  { q: "Name a special battle mechanic or format.", sub: "Gimmicks and battle styles from any generation.", a: [
+    ["Mega Evolution",45,"Mega"],["Dynamax",30],["Z-Moves",25,"Z Move"],["Terastallization",25,"Tera","Terastal"],["Double Battle",20],
+    ["Gigantamax",12],["Triple Battle",6],["Rotation Battle",3],["Horde Battle",2,"Horde"],["SOS Battle",3,"SOS"],["Sky Battle",2],
+    ["Inverse Battle",2],["Battle Royal",2],["Max Raid Battle",4,"Max Raid"],["Tera Raid Battle",4,"Tera Raid"],["Primal Reversion",3],
+    ["Ultra Burst",1],["Strong Style",1],["Agile Style",1],["Shadow Pokémon",1,"Shadow"]]},
 ];
 
 // ---------- Matching ----------
@@ -244,7 +449,7 @@ function findAnswer(q, guess) {
 }
 
 // ---------- Game state ----------
-const ROUNDS = 5, GUESSES = 3;
+let ROUNDS = 5; const GUESSES = 3;
 let deck = [], round = 0, score = 0, used = [], caughtTiers = {};
 const $ = id => document.getElementById(id);
 const ball = (id, sm) => `<span class="ball ${id}${sm ? " sm" : ""}"></span>`;
@@ -258,8 +463,17 @@ function renderLegend() {
 
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
+// Remember recently played questions in this browser so new games favour unseen ones.
+const SEEN_KEY = "pokrillion-seen";
+function loadSeen() { try { return JSON.parse(localStorage.getItem(SEEN_KEY)) || []; } catch { return []; } }
+function saveSeen(list) { try { localStorage.setItem(SEEN_KEY, JSON.stringify(list.slice(-Math.floor(QUESTIONS.length * 0.75)))); } catch {} }
+
 function startGame() {
-  deck = shuffle(QUESTIONS.slice()).slice(0, ROUNDS);
+  const seen = loadSeen();
+  const fresh = shuffle(QUESTIONS.filter(q => !seen.includes(q.q)));
+  const stale = seen.map(t => QUESTIONS.find(q => q.q === t)).filter(Boolean);
+  deck = fresh.concat(stale).slice(0, ROUNDS);
+  saveSeen(seen.filter(t => !deck.some(q => q.q === t)).concat(deck.map(q => q.q)));
   round = 0; score = 0; caughtTiers = {};
   $("roundTotal").textContent = ROUNDS;
   $("start").classList.add("hidden"); $("end").classList.add("hidden"); $("game").classList.remove("hidden");
@@ -335,7 +549,9 @@ function endGame() {
 }
 
 renderLegend();
-$("startBtn").onclick = startGame;
+$("qCount").textContent = QUESTIONS.length;
+document.querySelectorAll(".len").forEach(b => b.onclick = () => { ROUNDS = +b.dataset.rounds; startGame(); });
+$("menuBtn").onclick = () => { $("end").classList.add("hidden"); $("start").classList.remove("hidden"); };
 $("againBtn").onclick = startGame;
 $("guessForm").onsubmit = submitGuess;
 $("giveUpBtn").onclick = endRound;
